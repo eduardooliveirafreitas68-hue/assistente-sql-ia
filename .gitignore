@@ -18,3 +18,6 @@ Thumbs.db
 
 # Segredos do Streamlit
 .streamlit/secrets.toml
+
+# Planilha gerada (recrie com: python dados\/exportar_planilhas.py)
+dados/*.xlsx

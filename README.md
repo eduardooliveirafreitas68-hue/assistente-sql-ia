@@ -66,9 +66,10 @@ Dados **fictícios** de uma plataforma de delivery em 2025, gerados por `dados/g
 | itens_pedido | ~24.000 | produto, quantidade, preço |
 | avaliacoes | ~8.000 | nota de 1 a 5 |
 
-📘 **Para saber o que perguntar**, veja o [contexto do negócio e guia de perguntas](docs/contexto_do_negocio.md):
-panorama de 2025, o que existe nos dados, definições (ex.: o que é "pedido atrasado"), hipóteses para testar
-e ideias de perguntas por área. O mesmo guia aparece na barra lateral do app.
+📊 **Para explorar os dados antes de perguntar:**
+- no app, a aba **"Explorar dados"** mostra cada tabela como planilha, com o significado de cada coluna e botão para baixar em CSV;
+- o comando `python dados/exportar_planilhas.py` gera `dados/delivery_ficticio.xlsx`, com uma aba por tabela e um dicionário de dados;
+- o [contexto do negócio](docs/contexto_do_negocio.md) traz o panorama de 2025, as definições das métricas e hipóteses para investigar.
 
 O banco tem chaves primárias e estrangeiras, restrições (`CHECK`) e índices nas colunas de filtro e junção.
 Os dados têm padrões de propósito, para as análises fazerem sentido: o horário de pico atrasa mais,
@@ -127,6 +128,7 @@ assistente-sql-ia/
 │   └── banco.py            # camadas 2, 3 e 4 de segurança
 ├── dados/
 │   ├── gerar_dados.py      # cria o banco fictício
+│   ├── exportar_planilhas.py  # exporta o banco para Excel
 │   └── esquema.md          # documentação do esquema (enviada ao modelo)
 ├── avaliacao/
 │   ├── perguntas.json      # perguntas + SQL de referência
@@ -151,7 +153,7 @@ assistente-sql-ia/
 
 ## Tecnologias
 
-Python · SQLite · SQL · Claude API (Anthropic) · Structured outputs · Streamlit · pandas · pytest
+Python · SQLite · SQL · Claude API (Anthropic) · Structured outputs · Streamlit · pandas · openpyxl · pytest
 
 ---
 Feito por **Eduardo Oliveira de Freitas**, estudante de Tecnologia em Banco de Dados (Uninter).

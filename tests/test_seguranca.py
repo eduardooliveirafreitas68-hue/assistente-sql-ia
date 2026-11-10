@@ -80,3 +80,15 @@ def test_timeout_interrompe_consulta_lenta(banco):
     sql_lento = "SELECT COUNT(*) FROM itens_pedido a, itens_pedido b"
     with pytest.raises(ErroExecucao, match="limite"):
         executar_consulta(sql_lento, caminho=banco, timeout_s=0.5)
+
+
+# ---------- Dicionário de dados ----------
+
+def test_dicionario_cobre_todas_as_colunas_do_banco(banco):
+    from assistente.dicionario import carregar_dicionario
+    dic = carregar_dicionario()
+    con = sqlite3.connect(banco)
+    tabelas = [t for (t,) in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
+    colunas_banco = {(t, c[1]) for t in tabelas for c in con.execute(f"PRAGMA table_info({t})")}
+    con.close()
+    assert colunas_banco == set(zip(dic["tabela"], dic["coluna"]))

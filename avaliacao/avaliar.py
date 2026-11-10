@@ -7,9 +7,12 @@ Para cada pergunta de perguntas.json:
 
 Critério de acerto (comparação pelo RESULTADO, não pelo texto do SQL):
   - mesmo número de linhas;
-  - cada coluna do gabarito tem uma coluna equivalente no resultado do assistente
-    (mesmos valores, ignorando a ordem das linhas e nomes de colunas;
-     números arredondados para 1 casa decimal).
+  - EXATO: cada coluna do gabarito tem uma coluna equivalente no resultado do assistente
+    (mesmos valores, ignorando a ordem das linhas, nomes de colunas e colunas extras;
+     números arredondados para 1 casa decimal);
+  - SÓ NÚMEROS: se o exato falhar, compara apenas as colunas numéricas. Serve para
+    rótulos criados pela própria consulta (ex.: 'pico jantar' x 'Pico do jantar (18h-21h)'),
+    que são apresentação e não dado. Conta como acerto, mas aparece separado no relatório.
   - Perguntas sem resposta possível (sql_referencia = null) contam como acerto
     se o assistente disser que não consegue responder.
 
@@ -22,6 +25,7 @@ Uso:
 
 import argparse
 import json
+import numbers
 import os
 import sqlite3
 import sys
@@ -43,24 +47,46 @@ ARQ_RESULTADO = Path(__file__).parent / "resultado.md"
 
 
 def normalizar(valor):
-    if isinstance(valor, float):
-        return round(valor, 1)
+    if isinstance(valor, numbers.Number) and not isinstance(valor, bool):
+        return round(float(valor), 1)  # 5, 5.0 e numpy.int64(5) viram 5.0
     if isinstance(valor, str):
         return valor.strip().lower()
     return valor
 
 
-def colunas_normalizadas(linhas):
+def _chave_ordem(valor):
+    if isinstance(valor, float):
+        return (0, valor, "")
+    if valor is None:
+        return (2, 0, "")
+    return (1, 0, str(valor))
+
+
+def colunas_normalizadas(linhas, so_numericas=False):
+    """Cada coluna vira uma lista ordenada de valores (a ordem das linhas não importa)."""
     if not linhas:
         return []
-    return [sorted((normalizar(l[i]) for l in linhas), key=repr) for i in range(len(linhas[0]))]
+    colunas = []
+    for i in range(len(linhas[0])):
+        valores = [normalizar(l[i]) for l in linhas]
+        if so_numericas and not all(isinstance(v, float) or v is None for v in valores):
+            continue
+        colunas.append(sorted(valores, key=_chave_ordem))
+    return colunas
 
 
-def resultados_equivalentes(gabarito, obtido) -> bool:
+def comparar_resultados(gabarito, obtido) -> str | None:
+    """Retorna 'exato', 'numeros' (só as colunas numéricas conferem) ou None (errado)."""
     if len(gabarito) != len(obtido):
-        return False
+        return None
     cols_obtidas = colunas_normalizadas(obtido)
-    return all(col in cols_obtidas for col in colunas_normalizadas(gabarito))
+    if all(col in cols_obtidas for col in colunas_normalizadas(gabarito)):
+        return "exato"
+    numericas_gab = colunas_normalizadas(gabarito, so_numericas=True)
+    numericas_obt = colunas_normalizadas(obtido, so_numericas=True)
+    if numericas_gab and all(col in numericas_obt for col in numericas_gab):
+        return "numeros"
+    return None
 
 
 def tabela_md(linhas, limite=5) -> str:
@@ -115,8 +141,11 @@ def main():
         elif not r.sucesso:
             acertou, motivo = False, r.erro
         else:
-            acertou = resultados_equivalentes(gabarito, obtido)
-            motivo = "resultado igual ao gabarito" if acertou else "resultado diferente do gabarito"
+            modo = comparar_resultados(gabarito, obtido)
+            acertou = modo is not None
+            motivo = {"exato": "resultado igual ao gabarito",
+                      "numeros": "números iguais ao gabarito (rótulos de texto diferentes)",
+                      None: "resultado diferente do gabarito"}[modo]
 
         acertos += acertou
         print(f"     {'OK ' if acertou else 'ERROU'} ({motivo}) | tentativas: {r.tentativas}")

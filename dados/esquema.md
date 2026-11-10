@@ -12,6 +12,8 @@ pedidos feitos entre 2025-01-01 e 2025-12-31.
 - Um pedido está **atrasado** quando `status = 'entregue' AND data_entrega > previsao_entrega`.
 - Pedidos cancelados têm `data_entrega` NULL e podem ter `entregador_id` NULL.
 - Taxa de atraso = pedidos atrasados / pedidos entregues (cancelados não entram na conta).
+- Vendas (faturamento, itens vendidos, quantidade vendida, produtos mais vendidos) consideram apenas
+  pedidos com `status = 'entregue'`: pedido cancelado não é venda.
 - Horário de pico do jantar: pedidos com hora entre 18 e 21 (inclusive).
 
 ## Tabelas

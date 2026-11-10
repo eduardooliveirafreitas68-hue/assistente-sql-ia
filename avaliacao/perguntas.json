@@ -47,7 +47,8 @@
   {
     "id": 10,
     "pergunta": "Quais os 2 produtos mais vendidos em quantidade?",
-    "sql_referencia": "SELECT produto, SUM(quantidade) AS quantidade_vendida FROM itens_pedido GROUP BY produto ORDER BY quantidade_vendida DESC LIMIT 2"
+    "sql_referencia": "SELECT i.produto, SUM(i.quantidade) AS quantidade_vendida FROM itens_pedido i JOIN pedidos p ON p.id = i.pedido_id WHERE p.status = 'entregue' GROUP BY i.produto ORDER BY quantidade_vendida DESC LIMIT 2",
+    "observacao": "Gabarito corrigido em 10/11/2026: a versão anterior contava itens de pedidos cancelados. Pedido cancelado não é venda (definição registrada no esquema)."
   },
   {
     "id": 11,

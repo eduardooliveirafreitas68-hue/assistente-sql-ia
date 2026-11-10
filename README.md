@@ -81,10 +81,28 @@ a bicicleta em distâncias longas atrasa mais e o atraso derruba a nota da avali
 **sem resposta possível** (para testar se o assistente admite que não sabe, em vez de inventar).
 O script `avaliacao/avaliar.py` roda todas e compara o **resultado** de cada consulta com o gabarito.
 
-**Resultado (10/11/2026, modelo `claude-opus-5-5`): 16/18 acertos (88,9%).**
-A pergunta sem resposta possível foi recusada corretamente (o assistente não inventou dados).
-Os 2 erros (#9 e #10) estão em análise. Para investigar só eles, rode `python avaliacao/avaliar.py --ids 9 10`:
-o relatório mostra o SQL gerado pela IA ao lado do gabarito.
+### Histórico de resultados
+
+| Versão | Data | Modelo | Acurácia | O que mudou |
+|---|---|---|---|---|
+| v1 | 10/11/2026 | `claude-opus-5-5` | **16/18 (88,9%)** | Primeira medição |
+| v2 | _a medir_ | `claude-opus-5-5` | _a medir_ | Correções abaixo |
+
+A pergunta sem resposta possível (#18) foi recusada corretamente na v1: o assistente não inventou dados.
+
+### Análise dos 2 erros da v1
+
+Rodei `python avaliacao/avaliar.py --ids 9 10` para ver o SQL da IA ao lado do gabarito:
+
+- **#9 (atraso no pico do jantar): erro do avaliador, não da IA.** A IA retornou os mesmos números do gabarito
+  (9,15% e 29,93%), só que com rótulos diferentes (`'Pico do jantar (18h-21h)'` em vez de `'pico jantar'`).
+  Rótulo criado pela consulta é apresentação, não dado. **Correção:** quando a comparação exata falha,
+  o avaliador compara só as colunas numéricas e registra o caso separado no relatório.
+- **#10 (produtos mais vendidos): o gabarito estava errado.** A IA excluiu os pedidos cancelados, e o gabarito
+  contava os itens deles. Pedido cancelado não é venda. **Correção:** gabarito ajustado e a definição
+  "vendas consideram só pedidos entregues" adicionada ao esquema, para valer em qualquer pergunta.
+
+Lição: antes de confiar numa métrica, vale auditar o próprio critério de avaliação.
 
 ## Como rodar
 
@@ -141,7 +159,8 @@ assistente-sql-ia/
 ## Limitações conhecidas
 
 - O critério da avaliação compara valores, não nomes de colunas, e ignora a ordem das linhas.
-  Uma resposta "certa por outro caminho" pode ser contada como erro (ex.: percentual em 0–1 em vez de 0–100).
+  Uma resposta "certa por outro caminho" ainda pode ser contada como erro (ex.: percentual em 0–1 em vez de 0–100).
+  E o modo "só números" pode, em tese, aceitar números certos com rótulos errados: por isso ele aparece separado no relatório.
 - Perguntas ambíguas ("os melhores restaurantes") dependem da interpretação do modelo. A explicação mostra a suposição feita.
 - Cada pergunta é independente (ainda não há memória de conversa).
 - Os dados são fictícios e o banco é SQLite. Em produção, o ideal seria um usuário de banco somente leitura no PostgreSQL.

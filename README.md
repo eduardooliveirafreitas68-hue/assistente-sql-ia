@@ -86,7 +86,7 @@ O script `avaliacao/avaliar.py` roda todas e compara o **resultado** de cada con
 | Versão | Data | Modelo | Acurácia | O que mudou |
 |---|---|---|---|---|
 | v1 | 10/11/2026 | `claude-opus-5-5` | **16/18 (88,9%)** | Primeira medição |
-| v2 | _a medir_ | `claude-opus-5-5` | _a medir_ | Correções abaixo |
+| v2 | 10/11/2026 | `claude-opus-5-5` | **18/18 (100%)**: 16 exatas + 2 por "só números" (#6 e #9) | Correções abaixo |
 
 A pergunta sem resposta possível (#18) foi recusada corretamente na v1: o assistente não inventou dados.
 
@@ -103,6 +103,14 @@ Rodei `python avaliacao/avaliar.py --ids 9 10` para ver o SQL da IA ao lado do g
   "vendas consideram só pedidos entregues" adicionada ao esquema, para valer em qualquer pergunta.
 
 Lição: antes de confiar numa métrica, vale auditar o próprio critério de avaliação.
+
+### Cuidados ao ler o 100%
+
+- **O LLM não é determinístico.** A #6 passou como exata na v1 e só pelos números na v2: a mesma pergunta gerou
+  rótulos diferentes. Por isso a medição deve ser repetida, e não feita uma vez só.
+- **18 perguntas é uma amostra pequena**, e o esquema e um gabarito foram ajustados depois de ver os erros.
+  Há risco de o sistema ficar "bom na prova" e não no uso real. **Próximo passo:** criar um conjunto novo de
+  perguntas, escritas sem olhar as respostas da IA, para medir de forma independente.
 
 ## Como rodar
 

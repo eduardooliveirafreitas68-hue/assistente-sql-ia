@@ -21,3 +21,6 @@ Thumbs.db
 
 # Planilha gerada (recrie com: python dados\/exportar_planilhas.py)
 dados/*.xlsx
+
+# Execuções parciais da avaliação (investigação de erros)
+avaliacao/resultado_parcial.md

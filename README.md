@@ -81,8 +81,10 @@ a bicicleta em distâncias longas atrasa mais e o atraso derruba a nota da avali
 **sem resposta possível** (para testar se o assistente admite que não sabe, em vez de inventar).
 O script `avaliacao/avaliar.py` roda todas e compara o **resultado** de cada consulta com o gabarito.
 
-<!-- Depois de rodar a avaliação, preencha a linha abaixo com o resultado de avaliacao/resultado.md -->
-**Resultado:** _ainda não executado. Rode `python avaliacao/avaliar.py`._
+**Resultado (10/11/2026, modelo `claude-opus-5-5`): 16/18 acertos (88,9%).**
+A pergunta sem resposta possível foi recusada corretamente (o assistente não inventou dados).
+Os 2 erros (#9 e #10) estão em análise. Para investigar só eles, rode `python avaliacao/avaliar.py --ids 9 10`:
+o relatório mostra o SQL gerado pela IA ao lado do gabarito.
 
 ## Como rodar
 

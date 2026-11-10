@@ -16,9 +16,11 @@ Critério de acerto (comparação pelo RESULTADO, não pelo texto do SQL):
 ATENÇÃO: cada pergunta faz chamadas pagas à API.
 
 Uso:
-    python avaliacao/avaliar.py
+    python avaliacao/avaliar.py            # todas as perguntas
+    python avaliacao/avaliar.py --ids 9 10 # só algumas (mais barato)
 """
 
+import argparse
 import json
 import os
 import sqlite3
@@ -61,7 +63,20 @@ def resultados_equivalentes(gabarito, obtido) -> bool:
     return all(col in cols_obtidas for col in colunas_normalizadas(gabarito))
 
 
+def tabela_md(linhas, limite=5) -> str:
+    """Mostra as primeiras linhas de um resultado como texto, para o relatório."""
+    if not linhas:
+        return "(vazio)"
+    texto = "\n".join(str(l) for l in linhas[:limite])
+    return texto + (f"\n... ({len(linhas)} linhas no total)" if len(linhas) > limite else "")
+
+
 def main():
+    parser = argparse.ArgumentParser(description="Avalia o assistente com as perguntas de referência.")
+    parser.add_argument("--ids", type=int, nargs="+",
+                        help="roda só estas perguntas (ex.: --ids 9 10). Mais barato para investigar erros.")
+    args = parser.parse_args()
+
     load_dotenv(RAIZ / ".env")
     if not os.getenv("ANTHROPIC_API_KEY", "").strip() or "coloque-sua-chave" in os.getenv("ANTHROPIC_API_KEY", ""):
         sys.exit(
@@ -73,41 +88,51 @@ def main():
         print("Banco não encontrado. Gerando os dados fictícios...")
         gerar(CAMINHO_PADRAO)
     perguntas = json.loads(ARQ_PERGUNTAS.read_text(encoding="utf-8"))
+    if args.ids:
+        perguntas = [q for q in perguntas if q["id"] in set(args.ids)]
+    arq_resultado = ARQ_RESULTADO if not args.ids else ARQ_RESULTADO.with_name("resultado_parcial.md")
+
     assistente = AssistenteSQL()
     # mode=ro: abre só para leitura (e nunca cria um arquivo vazio por engano)
     con = sqlite3.connect(f"file:{CAMINHO_PADRAO.as_posix()}?mode=ro", uri=True)
 
-    linhas_relatorio, acertos = [], 0
-    for q in perguntas:
-        print(f"[{q['id']:>2}/{len(perguntas)}] {q['pergunta']}")
+    detalhes, acertos = [], 0
+    for n, q in enumerate(perguntas, start=1):
+        print(f"[{n:>2}/{len(perguntas)}] (#{q['id']}) {q['pergunta']}")
+        gabarito = con.execute(q["sql_referencia"]).fetchall() if q["sql_referencia"] else None
         try:
             r = assistente.perguntar(q["pergunta"])
         except ErroModelo as e:
             print(f"     ERRO NA API: {e}")
-            linhas_relatorio.append((q, False, "", f"erro na API: {e}"))
+            detalhes.append({"q": q, "ok": False, "motivo": f"erro na API: {e}", "sql": "", "obtido": None,
+                             "gabarito": gabarito, "explicacao": ""})
             continue
 
+        obtido = list(r.tabela.itertuples(index=False, name=None)) if r.sucesso else None
         if q["sql_referencia"] is None:
             acertou = not r.sucesso and r.sql == ""
             motivo = "recusou corretamente" if acertou else "deveria ter dito que não consegue responder"
         elif not r.sucesso:
             acertou, motivo = False, r.erro
         else:
-            gabarito = con.execute(q["sql_referencia"]).fetchall()
-            obtido = list(r.tabela.itertuples(index=False, name=None))
             acertou = resultados_equivalentes(gabarito, obtido)
             motivo = "resultado igual ao gabarito" if acertou else "resultado diferente do gabarito"
 
         acertos += acertou
         print(f"     {'OK ' if acertou else 'ERROU'} ({motivo}) | tentativas: {r.tentativas}")
-        linhas_relatorio.append((q, acertou, r.sql, motivo))
+        if not acertou:
+            print(f"     SQL da IA: {r.sql}")
+            print(f"     Resultado da IA: {tabela_md(obtido, 3) if obtido else '-'}")
+            print(f"     Gabarito: {tabela_md(gabarito, 3) if gabarito else '-'}")
+        detalhes.append({"q": q, "ok": acertou, "motivo": motivo, "sql": r.sql, "obtido": obtido,
+                         "gabarito": gabarito, "explicacao": r.explicacao})
 
     total = len(perguntas)
-    pct = 100 * acertos / total
+    pct = 100 * acertos / total if total else 0
     print(f"\nAcurácia: {acertos}/{total} = {pct:.1f}%")
 
     md = [
-        "# Resultado da avaliação",
+        "# Resultado da avaliação" + (" (parcial)" if args.ids else ""),
         "",
         f"- Data: {datetime.now():%Y-%m-%d %H:%M}",
         f"- Modelo: `{assistente.gerador.modelo}`",
@@ -116,10 +141,23 @@ def main():
         "| # | Pergunta | Resultado | Motivo |",
         "|---|---|---|---|",
     ]
-    for q, ok, _sql, motivo in linhas_relatorio:
-        md.append(f"| {q['id']} | {q['pergunta']} | {'✅' if ok else '❌'} | {motivo} |")
-    ARQ_RESULTADO.write_text("\n".join(md) + "\n", encoding="utf-8")
-    print(f"Relatório salvo em {ARQ_RESULTADO}")
+    for d in detalhes:
+        md.append(f"| {d['q']['id']} | {d['q']['pergunta']} | {'✅' if d['ok'] else '❌'} | {d['motivo']} |")
+    md += ["", "## Detalhes", ""]
+    for d in detalhes:
+        md += [
+            f"### #{d['q']['id']} {'✅' if d['ok'] else '❌'} {d['q']['pergunta']}",
+            "",
+            f"**Explicação da IA:** {d['explicacao'] or '-'}",
+            "",
+            "**SQL da IA:**", "```sql", d["sql"] or "(nenhum)", "```",
+            "**Resultado da IA:**", "```", tabela_md(d["obtido"]) if d["obtido"] else "-", "```",
+            "**SQL de referência:**", "```sql", d["q"]["sql_referencia"] or "(sem resposta possível)", "```",
+            "**Gabarito:**", "```", tabela_md(d["gabarito"]) if d["gabarito"] else "-", "```",
+            "",
+        ]
+    arq_resultado.write_text("\n".join(md) + "\n", encoding="utf-8")
+    print(f"Relatório salvo em {arq_resultado}")
 
 
 if __name__ == "__main__":

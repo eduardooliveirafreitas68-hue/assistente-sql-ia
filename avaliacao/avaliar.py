@@ -20,6 +20,7 @@ Uso:
 """
 
 import json
+import os
 import sqlite3
 import sys
 from datetime import datetime
@@ -62,6 +63,12 @@ def resultados_equivalentes(gabarito, obtido) -> bool:
 
 def main():
     load_dotenv(RAIZ / ".env")
+    if not os.getenv("ANTHROPIC_API_KEY", "").strip() or "coloque-sua-chave" in os.getenv("ANTHROPIC_API_KEY", ""):
+        sys.exit(
+            "ERRO: chave da API não encontrada.\n"
+            f"Crie o arquivo {RAIZ / '.env'} (copie o .env.example) com a linha:\n"
+            "ANTHROPIC_API_KEY=sk-ant-...sua-chave..."
+        )
     if not CAMINHO_PADRAO.exists():
         print("Banco não encontrado. Gerando os dados fictícios...")
         gerar(CAMINHO_PADRAO)

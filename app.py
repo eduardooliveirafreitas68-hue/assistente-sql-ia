@@ -19,7 +19,7 @@ from dados.gerar_dados import gerar
 load_dotenv()
 
 # No Streamlit Community Cloud a chave fica em "Secrets" (não existe .env lá).
-if not os.getenv("ANTHROPIC_API_KEY"):
+if not os.getenv("ANTHROPIC_API_KEY", "").strip() or "coloque-sua-chave" in os.getenv("ANTHROPIC_API_KEY", ""):
     try:
         os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
     except Exception:
@@ -69,7 +69,7 @@ with st.sidebar:
     with st.expander("Ver esquema do banco"):
         st.markdown(CAMINHO_ESQUEMA.read_text(encoding="utf-8"))
 
-if not os.getenv("ANTHROPIC_API_KEY"):
+if not os.getenv("ANTHROPIC_API_KEY", "").strip() or "coloque-sua-chave" in os.getenv("ANTHROPIC_API_KEY", ""):
     st.error("Chave da API não encontrada. Copie `.env.example` para `.env` e coloque sua ANTHROPIC_API_KEY.")
     st.stop()
 

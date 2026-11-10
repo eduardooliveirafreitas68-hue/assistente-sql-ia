@@ -1,0 +1,20 @@
+# Segredos: NUNCA subir
+.env
+
+# Ambiente virtual e cache do Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Banco gerado (qualquer pessoa recria com: python dados/gerar_dados.py)
+dados/*.db
+
+# Sistema
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Segredos do Streamlit
+.streamlit/secrets.toml

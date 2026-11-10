@@ -33,6 +33,7 @@ from dotenv import load_dotenv  # noqa: E402
 from assistente.assistente import AssistenteSQL  # noqa: E402
 from assistente.banco import CAMINHO_PADRAO  # noqa: E402
 from assistente.llm import ErroModelo  # noqa: E402
+from dados.gerar_dados import gerar  # noqa: E402
 
 ARQ_PERGUNTAS = Path(__file__).parent / "perguntas.json"
 ARQ_RESULTADO = Path(__file__).parent / "resultado.md"
@@ -61,9 +62,13 @@ def resultados_equivalentes(gabarito, obtido) -> bool:
 
 def main():
     load_dotenv(RAIZ / ".env")
+    if not CAMINHO_PADRAO.exists():
+        print("Banco não encontrado. Gerando os dados fictícios...")
+        gerar(CAMINHO_PADRAO)
     perguntas = json.loads(ARQ_PERGUNTAS.read_text(encoding="utf-8"))
     assistente = AssistenteSQL()
-    con = sqlite3.connect(CAMINHO_PADRAO)
+    # mode=ro: abre só para leitura (e nunca cria um arquivo vazio por engano)
+    con = sqlite3.connect(f"file:{CAMINHO_PADRAO.as_posix()}?mode=ro", uri=True)
 
     linhas_relatorio, acertos = [], 0
     for q in perguntas:

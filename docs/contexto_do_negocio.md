@@ -7,8 +7,6 @@
 Uma **plataforma de delivery de comida** que conecta clientes, restaurantes e entregadores em seis cidades
 brasileiras. O banco cobre **todos os pedidos de 2025** (01/01 a 31/12).
 
-Você acabou de entrar no time de dados. A liderança quer entender **onde a operação perde eficiência**
-e **onde está o dinheiro**, para planejar 2026.
 
 ## 2. Panorama de 2025
 

@@ -12,7 +12,7 @@ executa em **modo somente leitura** e mostra o resultado, o SQL gerado e uma exp
 > | carro | 14.59 |
 > | moto | 8.24 |
 
-<!-- Depois de rodar o app, tire um print e salve em docs/demo.png. Então troque esta linha por: ![Demonstração](docs/demo.png) -->
+![Demonstração do app: pergunta em português, resposta em tabela, explicação e SQL gerado](docs/demo.png)
 
 ## O problema
 

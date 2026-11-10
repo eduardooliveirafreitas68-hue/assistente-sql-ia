@@ -113,7 +113,7 @@ with aba_perguntar:
                     mostrar_grafico(resposta.tabela)
                 with col2:
                     st.markdown("**SQL gerado (validado):**")
-                    st.code(resposta.sql, language="sql")
+                    st.code(resposta.sql, language="sql", wrap_lines=True)
                     if resposta.tentativas > 1:
                         st.caption(f"O modelo corrigiu o SQL após um erro ({resposta.tentativas} tentativas).")
                         for erro in resposta.historico_erros:
@@ -121,4 +121,4 @@ with aba_perguntar:
             elif resposta is not None:
                 st.warning(f"{resposta.erro}\n\n{resposta.explicacao}")
                 if resposta.sql:
-                    st.code(resposta.sql, language="sql")
+                    st.code(resposta.sql, language="sql", wrap_lines=True)

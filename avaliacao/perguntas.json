@@ -1,0 +1,93 @@
+[
+  {
+    "id": 1,
+    "pergunta": "Quantos pedidos foram feitos em 2025?",
+    "sql_referencia": "SELECT COUNT(*) AS total_pedidos FROM pedidos WHERE strftime('%Y', data_pedido) = '2025'"
+  },
+  {
+    "id": 2,
+    "pergunta": "Quantos pedidos atrasaram em março de 2025?",
+    "sql_referencia": "SELECT COUNT(*) AS pedidos_atrasados FROM pedidos WHERE status = 'entregue' AND data_entrega > previsao_entrega AND strftime('%Y-%m', data_pedido) = '2025-03'"
+  },
+  {
+    "id": 3,
+    "pergunta": "Qual a taxa de atraso (em %) por tipo de veículo do entregador?",
+    "sql_referencia": "SELECT e.veiculo, ROUND(100.0 * SUM(CASE WHEN p.data_entrega > p.previsao_entrega THEN 1 ELSE 0 END) / COUNT(*), 2) AS taxa_atraso_pct FROM pedidos p JOIN entregadores e ON e.id = p.entregador_id WHERE p.status = 'entregue' GROUP BY e.veiculo"
+  },
+  {
+    "id": 4,
+    "pergunta": "Qual o faturamento total (valor_total) por cidade dos clientes, considerando só pedidos entregues?",
+    "sql_referencia": "SELECT c.cidade, ROUND(SUM(p.valor_total), 2) AS faturamento FROM pedidos p JOIN clientes c ON c.id = p.cliente_id WHERE p.status = 'entregue' GROUP BY c.cidade"
+  },
+  {
+    "id": 5,
+    "pergunta": "Quais são as 5 categorias de restaurante com maior ticket médio (valor_total médio) em pedidos entregues?",
+    "sql_referencia": "SELECT r.categoria, ROUND(AVG(p.valor_total), 2) AS ticket_medio FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.status = 'entregue' GROUP BY r.categoria ORDER BY ticket_medio DESC LIMIT 5"
+  },
+  {
+    "id": 6,
+    "pergunta": "Qual a nota média das avaliações de pedidos atrasados e de pedidos entregues no prazo?",
+    "sql_referencia": "SELECT CASE WHEN p.data_entrega > p.previsao_entrega THEN 'atrasado' ELSE 'no prazo' END AS situacao, ROUND(AVG(a.nota), 2) AS nota_media FROM pedidos p JOIN avaliacoes a ON a.pedido_id = p.id WHERE p.status = 'entregue' GROUP BY situacao"
+  },
+  {
+    "id": 7,
+    "pergunta": "Quantos pedidos foram cancelados em cada mês de 2025?",
+    "sql_referencia": "SELECT strftime('%Y-%m', data_pedido) AS mes, COUNT(*) AS cancelados FROM pedidos WHERE status = 'cancelado' AND strftime('%Y', data_pedido) = '2025' GROUP BY mes"
+  },
+  {
+    "id": 8,
+    "pergunta": "Qual o tempo médio de entrega em minutos, considerando os pedidos entregues?",
+    "sql_referencia": "SELECT ROUND(AVG((julianday(data_entrega) - julianday(data_pedido)) * 24 * 60), 2) AS tempo_medio_min FROM pedidos WHERE status = 'entregue'"
+  },
+  {
+    "id": 9,
+    "pergunta": "Qual a taxa de atraso no horário de pico do jantar (18h às 21h) comparada com os outros horários?",
+    "sql_referencia": "SELECT CASE WHEN CAST(strftime('%H', data_pedido) AS INTEGER) BETWEEN 18 AND 21 THEN 'pico jantar' ELSE 'outros horários' END AS periodo, ROUND(100.0 * SUM(CASE WHEN data_entrega > previsao_entrega THEN 1 ELSE 0 END) / COUNT(*), 2) AS taxa_atraso_pct FROM pedidos WHERE status = 'entregue' GROUP BY periodo"
+  },
+  {
+    "id": 10,
+    "pergunta": "Quais os 2 produtos mais vendidos em quantidade?",
+    "sql_referencia": "SELECT produto, SUM(quantidade) AS quantidade_vendida FROM itens_pedido GROUP BY produto ORDER BY quantidade_vendida DESC LIMIT 2"
+  },
+  {
+    "id": 11,
+    "pergunta": "Qual a participação (%) de cada forma de pagamento no total de pedidos?",
+    "sql_referencia": "SELECT forma_pagamento, ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM pedidos), 2) AS participacao_pct FROM pedidos GROUP BY forma_pagamento"
+  },
+  {
+    "id": 12,
+    "pergunta": "Quantos pedidos tiveram frete grátis?",
+    "sql_referencia": "SELECT COUNT(*) AS pedidos_frete_gratis FROM pedidos WHERE taxa_entrega = 0"
+  },
+  {
+    "id": 13,
+    "pergunta": "Qual o restaurante com mais pedidos entregues em Porto Alegre? Mostre o nome e a quantidade.",
+    "sql_referencia": "SELECT r.nome, COUNT(*) AS pedidos_entregues FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.status = 'entregue' AND r.cidade = 'Porto Alegre' GROUP BY r.id, r.nome ORDER BY pedidos_entregues DESC LIMIT 1"
+  },
+  {
+    "id": 14,
+    "pergunta": "Quantos clientes diferentes fizeram pelo menos um pedido em dezembro de 2025?",
+    "sql_referencia": "SELECT COUNT(DISTINCT cliente_id) AS clientes_ativos FROM pedidos WHERE strftime('%Y-%m', data_pedido) = '2025-12'"
+  },
+  {
+    "id": 15,
+    "pergunta": "Qual a distância média, em km, dos pedidos atrasados entregues de bicicleta?",
+    "sql_referencia": "SELECT ROUND(AVG(p.distancia_km), 2) AS distancia_media_km FROM pedidos p JOIN entregadores e ON e.id = p.entregador_id WHERE p.status = 'entregue' AND p.data_entrega > p.previsao_entrega AND e.veiculo = 'bicicleta'"
+  },
+  {
+    "id": 16,
+    "pergunta": "Qual a porcentagem de pedidos entregues que receberam avaliação?",
+    "sql_referencia": "SELECT ROUND(100.0 * COUNT(a.pedido_id) / COUNT(*), 2) AS pct_avaliados FROM pedidos p LEFT JOIN avaliacoes a ON a.pedido_id = p.id WHERE p.status = 'entregue'"
+  },
+  {
+    "id": 17,
+    "pergunta": "Qual entregador fez mais entregas em São Paulo? Mostre nome, veículo e quantidade.",
+    "sql_referencia": "SELECT e.nome, e.veiculo, COUNT(*) AS entregas FROM pedidos p JOIN entregadores e ON e.id = p.entregador_id WHERE p.status = 'entregue' AND e.cidade = 'São Paulo' GROUP BY e.id, e.nome, e.veiculo ORDER BY entregas DESC LIMIT 1"
+  },
+  {
+    "id": 18,
+    "pergunta": "Qual foi o salário médio dos entregadores em 2025?",
+    "sql_referencia": null,
+    "observacao": "Pergunta sem resposta possível (não há dados de salário). O esperado é o assistente dizer que não consegue responder."
+  }
+]

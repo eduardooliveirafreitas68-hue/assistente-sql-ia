@@ -101,7 +101,7 @@ pip install -r requirements.txt
 python dados/gerar_dados.py
 ```
 
-Copie `.env.example` para `.env` e coloque sua chave em `ANTHROPIC_API_KEY`. Depois:
+Copie `.env.example` para `.env` e coloque sua chave em `ANTHROPIC_API_KEY`. Depois rode o app (no Windows, também dá para dar dois cliques em `iniciar_app.bat`):
 
 ```bash
 streamlit run app.py

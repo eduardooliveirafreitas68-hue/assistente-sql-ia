@@ -64,6 +64,8 @@ with st.sidebar:
     for ex in EXEMPLOS:
         if st.button(ex, width="stretch"):
             st.session_state["pergunta"] = ex
+    with st.expander("📘 Contexto do negócio e ideias de perguntas"):
+        st.markdown((CAMINHO_ESQUEMA.parent.parent / "docs" / "contexto_do_negocio.md").read_text(encoding="utf-8"))
     with st.expander("Ver esquema do banco"):
         st.markdown(CAMINHO_ESQUEMA.read_text(encoding="utf-8"))
 
